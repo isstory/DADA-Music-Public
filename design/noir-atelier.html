@@ -1,0 +1,721 @@
+<title>DADA Noir Atelier</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<style>
+/* Layout: Spotify형 앱 셸 시안. PC = 사이드바 | 메인 | 우측 패널 + 하단 바, 모바일 = 하단 탭 + 미니 바. 단일 다크 룩(의도적). */
+:root {
+  --void: #070606;        /* 패널 사이 바닥 */
+  --ink: #121110;         /* 패널 배경 */
+  --surface: #1a1816;     /* 카드, 타일 */
+  --raised: #24211e;      /* 미니 바, 입력창 */
+  --hover: #2c2925;       /* 행 hover */
+  --line: #2f2b27;
+  --text: #f2ede4;
+  --muted: #a39a8f;
+  --faint: #6f675e;
+  --accent: #c8a97e;      /* 샴페인 (확정) */
+  --accent-ink: #1a140c;
+  --ok: #8fb59a; --warn: #d9b26a; --err: #d97b6c;
+
+  --font: "Figtree", "Noto Sans KR", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+
+  --r-xs: 4px; --r-sm: 6px; --r-md: 8px; --r-lg: 12px; --r-pill: 999px;
+  --ease: cubic-bezier(.3,.7,.4,1);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--void); color: var(--text);
+  font: 400 15px/1.6 var(--font);
+  -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 48px 72px;
+}
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 64px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+a { color: inherit; }
+h1, h2, h3, h4, h5 { margin: 0; text-wrap: balance; }
+p { margin: 0; }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---------- 문서 헤더 ---------- */
+.mast { display: grid; gap: 20px; }
+.eyebrow { font: 700 12px/1 var(--font); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.mast h1 { font: 800 clamp(40px, 7vw, 76px)/1 var(--font); letter-spacing: -.03em; }
+.mast h1 span { color: var(--accent); }
+.mast .lede { font-size: 17px; color: var(--muted); max-width: 40em; }
+.decided { display: flex; flex-wrap: wrap; gap: 8px; }
+.decided span { display: inline-flex; align-items: center; gap: 8px; font: 500 13px/1 var(--font); padding: 9px 14px; border-radius: var(--r-pill); background: var(--surface); }
+.decided span::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+section { display: grid; gap: 24px; }
+.sec-head { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 24px; }
+.sec-head h2 { font: 700 26px/1.25 var(--font); letter-spacing: -.01em; }
+.sec-head p { color: var(--muted); max-width: 62ch; }
+
+/* ---------- 공통 조각 ---------- */
+.art { position: relative; flex: none; border-radius: var(--r-xs); overflow: hidden;
+  background:
+    radial-gradient(circle at 28% 30%, hsl(var(--h1) 45% 58% / .95), transparent 58%),
+    radial-gradient(circle at 78% 72%, hsl(var(--h2) 40% 36%), transparent 62%),
+    linear-gradient(160deg, hsl(var(--h2) 22% 15%), #14110f); }
+.art.round { border-radius: 50%; }
+.art.liked { background: linear-gradient(135deg, #e9d6b4, #8c6d43); display: grid; place-items: center; color: var(--accent-ink); }
+.art.liked svg { width: 42%; height: 42%; }
+.art.liked svg path { fill: currentColor; }
+
+.status { display: inline-flex; align-items: center; gap: 6px; font: 500 12px/1 var(--font); color: var(--muted); white-space: nowrap; }
+.status i { width: 7px; height: 7px; border-radius: 50%; flex: none; display: block; }
+.status.ok i { background: var(--ok); }
+.status.run i { background: var(--warn); animation: pulse 1.3s ease-in-out infinite; }
+.status.err i { background: var(--err); }
+.status.none i { border: 1px solid var(--faint); }
+@keyframes pulse { 50% { opacity: .3; } }
+
+.chip { font: 500 13px/1 var(--font); padding: 8px 14px; border-radius: var(--r-pill); background: var(--raised); color: var(--text); white-space: nowrap; }
+.chip[aria-pressed="true"] { background: var(--text); color: var(--ink); }
+.chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 44px; padding: 0 22px; border-radius: var(--r-pill); font: 700 14px/1 var(--font); text-decoration: none; transition: transform 160ms var(--ease), filter 160ms; white-space: nowrap; }
+.btn:hover { filter: brightness(1.08); transform: scale(1.02); }
+.btn:active { transform: scale(.98); }
+.btn-primary { background: var(--accent); color: var(--accent-ink); }
+.btn-ghost { border: 1px solid var(--faint); color: var(--text); }
+.btn svg { width: 16px; height: 16px; flex: none; }
+.btn[disabled] { opacity: .6; cursor: default; transform: none; }
+
+.icon-btn { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 50%; color: var(--muted); transition: color 140ms, transform 140ms; flex: none; }
+.icon-btn svg { width: 18px; height: 18px; }
+.icon-btn:hover { color: var(--text); transform: scale(1.06); }
+.icon-btn.heart[aria-pressed="true"] { color: var(--accent); }
+.icon-btn.heart[aria-pressed="true"] path { fill: currentColor; }
+.icon-btn.nope[aria-pressed="true"] { color: var(--err); }
+.dimmed { opacity: .4; }
+
+.demo-flag { font: 700 10px/1 var(--font); letter-spacing: .1em; color: var(--faint); border: 1px solid var(--line); padding: 4px 6px; border-radius: 4px; }
+.src { font-size: 11.5px; color: var(--faint); line-height: 1.5; }
+
+/* 카드 (Spotify형 선반) */
+.shelf { display: grid; gap: 12px; }
+.shelf-h { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.shelf-h h4 { font: 700 22px/1.2 var(--font); letter-spacing: -.01em; }
+.shelf-h a { font: 700 13px/1 var(--font); color: var(--muted); text-decoration: none; }
+.shelf-h a:hover { text-decoration: underline; }
+.cards { display: grid; grid-auto-flow: column; grid-auto-columns: 172px; gap: 4px; overflow-x: auto; scrollbar-width: none; margin-inline: -12px; padding-inline: 4px; }
+.card { padding: 10px; border-radius: var(--r-md); display: grid; gap: 8px; align-content: start; transition: background 160ms; cursor: pointer; text-align: left; }
+.card:hover { background: var(--surface); }
+.card .art { width: 100%; aspect-ratio: 1; max-width: 100%; border-radius: var(--r-sm); }
+.card .art .rank { position: absolute; left: 8px; bottom: 6px; font: 800 30px/1 var(--font); color: var(--text); text-shadow: 0 2px 12px rgb(0 0 0 / .6); }
+.card b { font: 600 14px/1.3 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card small { font-size: 13px; color: var(--muted); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+/* 빠른 접근 타일 */
+.quick { display: grid; gap: 8px; }
+.tile { display: flex; align-items: center; gap: 12px; height: 56px; padding-right: 12px; border-radius: var(--r-sm); background: rgb(255 255 255 / .07); overflow: hidden; transition: background 160ms; text-align: left; cursor: pointer; min-width: 0; }
+.tile:hover { background: rgb(255 255 255 / .12); }
+.tile .art { width: 56px; height: 56px; border-radius: 0; }
+.tile b { font: 700 13.5px/1.25 var(--font); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-width: 0; }
+
+/* =========================================================
+   PC 셸
+   ========================================================= */
+.desk-scroll { overflow-x: auto; border-radius: 14px; }
+.browser { width: 1240px; border-radius: 14px; overflow: hidden; border: 1px solid #262320; background: var(--void); }
+.browser-bar { height: 36px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #0f0e0d; border-bottom: 1px solid #1c1a18; }
+.browser-bar i { width: 11px; height: 11px; border-radius: 50%; background: #2c2925; display: block; }
+.browser-bar span { margin-left: 16px; font-size: 12px; color: var(--faint); background: #1a1816; padding: 4px 14px; border-radius: 6px; }
+.browser-bar .demo-flag { margin-left: auto; }
+
+.desk { height: 780px; display: grid; grid-template-columns: 290px minmax(0, 1fr) 300px; grid-template-rows: minmax(0, 1fr) 76px; gap: 8px; padding: 8px; }
+.panel { background: var(--ink); border-radius: var(--r-md); min-height: 0; }
+.d-side { display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; background: none; }
+.d-nav { padding: 18px 12px 10px; display: grid; gap: 4px; }
+.logo { display: flex; align-items: center; gap: 10px; padding: 0 12px 14px; font: 800 20px/1 var(--font); letter-spacing: -.02em; }
+.logo i { width: 26px; height: 26px; border-radius: 7px; background: var(--accent); display: grid; place-items: center; color: var(--accent-ink); font: 800 14px/1 var(--font); font-style: normal; }
+.nav-item { display: flex; align-items: center; gap: 16px; height: 42px; padding: 0 12px; border-radius: var(--r-sm); font: 700 15px/1 var(--font); color: var(--muted); transition: color 140ms; text-align: left; }
+.nav-item svg { width: 24px; height: 24px; }
+.nav-item:hover, .nav-item[aria-current="page"] { color: var(--text); }
+
+.d-lib { display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 12px; padding: 14px 8px 8px; }
+.d-lib-h { display: flex; justify-content: space-between; align-items: center; padding: 0 8px 0 12px; }
+.d-lib-h b { display: flex; align-items: center; gap: 12px; font: 700 15px/1 var(--font); color: var(--muted); }
+.d-lib-h b svg { width: 24px; height: 24px; }
+.d-lib .chips { padding: 0 8px; }
+.lib-list { overflow-y: auto; display: grid; align-content: start; scrollbar-width: thin; scrollbar-color: var(--hover) transparent; }
+.lib-item { display: grid; grid-template-columns: 48px minmax(0, 1fr); gap: 12px; align-items: center; padding: 8px; border-radius: var(--r-sm); text-align: left; transition: background 140ms; }
+.lib-item:hover { background: var(--surface); }
+.lib-item[aria-current="true"] { background: var(--raised); }
+.lib-item .art { width: 48px; height: 48px; }
+.lib-item .meta { min-width: 0; display: grid; gap: 3px; }
+.lib-item .meta b { font: 500 14.5px/1.25 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lib-item[aria-current="true"] .meta b { color: var(--accent); }
+.lib-item .meta small { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+.lib-item .meta small .status { font-size: 12px; }
+
+.d-main { position: relative; overflow: hidden; display: grid; grid-template-rows: minmax(0, 1fr); }
+.d-top { position: absolute; top: 0; left: 0; right: 0; z-index: 3; display: flex; align-items: center; gap: 10px; padding: 14px 20px; }
+.d-top .circle { width: 32px; height: 32px; border-radius: 50%; background: rgb(0 0 0 / .5); display: grid; place-items: center; color: var(--muted); }
+.d-top .circle svg { width: 16px; height: 16px; }
+.d-search { flex: 1; max-width: 420px; height: 44px; margin-left: 8px; display: flex; align-items: center; gap: 10px; padding: 0 16px; border-radius: var(--r-pill); background: var(--raised); color: var(--muted); font-size: 14px; }
+.d-search svg { width: 20px; height: 20px; }
+.d-top .me { margin-left: auto; width: 32px; height: 32px; border-radius: 50%; background: #3a3129; display: grid; place-items: center; font: 700 13px/1 var(--font); box-shadow: 0 0 0 4px rgb(0 0 0 / .4); }
+.d-view { overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--hover) transparent; }
+.d-view[hidden] { display: none; }
+
+/* PC 홈 */
+.d-home { padding: 76px 24px 32px; display: grid; gap: 32px; align-content: start; background: linear-gradient(180deg, #2a2219 0, var(--ink) 300px); }
+.d-home .quick { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+/* PC 라디오(플레이리스트) */
+.d-radio { background: linear-gradient(180deg, hsl(28 34% 26%) 0, hsl(28 20% 13%) 340px, var(--ink) 520px); }
+.pl-head { display: flex; align-items: flex-end; gap: 24px; padding: 84px 24px 24px; }
+.pl-head .art { width: 220px; height: 220px; border-radius: var(--r-sm); box-shadow: 0 12px 48px rgb(0 0 0 / .5); }
+.pl-head .meta { display: grid; gap: 10px; min-width: 0; }
+.pl-head .kind { font: 600 13px/1 var(--font); }
+.pl-head h3 { font: 800 76px/1 var(--font); letter-spacing: -.035em; }
+.pl-head .facts { font-size: 14px; color: var(--muted); }
+.pl-head .facts b { color: var(--text); }
+.pl-actions { display: flex; align-items: center; gap: 16px; padding: 8px 24px 20px; background: linear-gradient(180deg, rgb(0 0 0 / .12), transparent); }
+.pl-actions .icon-btn { width: 40px; height: 40px; }
+.pl-actions .icon-btn svg { width: 26px; height: 26px; }
+.pl-actions .status { margin-left: 4px; font-size: 13px; }
+.pl-note { margin: 0 24px 20px; padding: 16px 18px; border-radius: var(--r-md); background: rgb(255 255 255 / .04); display: grid; gap: 6px; max-width: 760px; }
+.pl-note b { font: 700 13px/1 var(--font); color: var(--accent); }
+.pl-note p { font-size: 14px; color: var(--muted); line-height: 1.65; }
+
+.tbl { padding: 0 24px 32px; }
+.tbl-row { display: grid; grid-template-columns: 32px minmax(0, 1.4fr) minmax(0, 1fr) 84px 56px; gap: 16px; align-items: center; height: 56px; padding: 0 16px; border-radius: var(--r-sm); transition: background 120ms; }
+.tbl-row:not(.tbl-h):hover { background: rgb(255 255 255 / .07); }
+.tbl-h { height: 36px; border-bottom: 1px solid var(--line); border-radius: 0; margin-bottom: 8px; font: 500 13px/1 var(--font); color: var(--muted); }
+.tbl-row .n { text-align: right; color: var(--muted); font-size: 15px; }
+.tbl-row .ti { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.tbl-row .ti .art { width: 40px; height: 40px; }
+.tbl-row .ti div { min-width: 0; display: grid; gap: 2px; }
+.tbl-row .ti b { font: 500 15px/1.25 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tbl-row .ti small { font-size: 13.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tbl-row .why { font-size: 13.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tbl-row .why .new { color: var(--accent); font-weight: 600; margin-right: 6px; }
+.tbl-row .acts { display: flex; gap: 2px; }
+.tbl-row .d { text-align: right; color: var(--muted); font-size: 14px; }
+
+/* PC 우측 패널 */
+.d-right { padding: 16px; display: grid; gap: 16px; align-content: start; overflow-y: auto; }
+.d-right .head { display: flex; justify-content: space-between; align-items: center; }
+.d-right .head b { font: 700 15px/1 var(--font); }
+.d-right > .art { width: 100%; aspect-ratio: 1; max-width: 100%; border-radius: var(--r-md); }
+.d-right h4 { font: 800 24px/1.15 var(--font); letter-spacing: -.01em; }
+.d-right .sub { font-size: 14px; color: var(--muted); margin-top: -10px; }
+.d-right .box { background: var(--surface); border-radius: var(--r-md); padding: 14px; display: grid; gap: 10px; }
+.d-right .box > b { font: 700 14px/1.2 var(--font); }
+.d-right .box p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.queue { display: grid; gap: 4px; }
+.queue div { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 10px; align-items: center; }
+.queue .art { width: 36px; height: 36px; }
+.queue span { display: grid; min-width: 0; }
+.queue span b { font: 500 13.5px/1.25 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.queue span small { font-size: 12px; color: var(--muted); }
+
+/* PC 하단 바 = 동기화 바 (가짜 재생바 아님) */
+.d-bar { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) minmax(0, 1fr); align-items: center; gap: 16px; padding: 0 12px; }
+.d-bar .now { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.d-bar .now .art { width: 56px; height: 56px; }
+.d-bar .now div { min-width: 0; display: grid; gap: 2px; }
+.d-bar .now b { font: 600 14px/1.25 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.d-bar .now small { font-size: 12.5px; color: var(--muted); }
+.d-bar .center { display: grid; gap: 8px; justify-items: center; }
+.d-bar .center .row { display: flex; align-items: center; gap: 14px; }
+.d-bar .center .btn { height: 36px; font-size: 13px; padding: 0 18px; }
+.prog { width: 100%; max-width: 460px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; font-size: 11.5px; color: var(--muted); }
+.bar { height: 4px; background: var(--hover); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 100%; background: var(--text); border-radius: 4px; transition: width 220ms linear; }
+.bar.syncing i { background: var(--accent); }
+.d-bar .right { display: flex; justify-content: flex-end; align-items: center; gap: 12px; font-size: 12px; color: var(--muted); }
+.quota { display: grid; gap: 5px; width: 140px; }
+.quota .bar i { background: var(--muted); }
+
+/* =========================================================
+   모바일 셸
+   ========================================================= */
+.phones { display: flex; flex-wrap: wrap; gap: 40px; justify-content: center; }
+.device { margin: 0; display: grid; gap: 12px; justify-items: center; width: 375px; max-width: 100%; }
+.device figcaption { font-size: 13px; color: var(--muted); text-align: center; }
+.phone { width: 100%; height: 780px; border-radius: 44px; background: var(--ink); border: 1px solid #2c2925; box-shadow: 0 0 0 7px #000, 0 40px 80px -30px #000; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+.sbar { flex: none; height: 46px; display: flex; justify-content: space-between; align-items: center; padding: 4px 28px 0; font: 600 14px/1 var(--font); }
+.sbar .demo-flag { font-size: 9px; }
+.m-scroll { flex: 1; overflow-y: auto; scrollbar-width: none; display: grid; gap: 26px; align-content: start; padding: 4px 16px 150px; }
+.m-scroll::-webkit-scrollbar { display: none; }
+.m-top { display: flex; align-items: center; gap: 10px; }
+.m-top .me { width: 32px; height: 32px; border-radius: 50%; background: #3a3129; display: grid; place-items: center; font: 700 13px/1 var(--font); flex: none; }
+.m-scroll .quick { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.m-scroll .tile { height: 48px; }
+.m-scroll .tile .art { width: 48px; height: 48px; }
+.m-scroll .tile b { font-size: 12.5px; }
+.m-scroll .cards { grid-auto-columns: 146px; margin-inline: -16px; padding-inline: 6px; gap: 0; }
+.m-scroll .shelf-h h4 { font-size: 20px; }
+
+.m-dock { position: absolute; left: 0; right: 0; bottom: 0; padding: 30px 8px 10px; background: linear-gradient(180deg, transparent, rgb(18 17 16 / .96) 30%); display: grid; gap: 6px; }
+.mini { display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 7px; border-radius: var(--r-md); background: #3a2f22; position: relative; overflow: hidden; }
+.mini .art { width: 40px; height: 40px; }
+.mini .meta { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.mini .meta b { font: 600 13px/1.2 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mini .status { font-size: 11.5px; color: #cfc4b4; }
+.mini .open { height: 32px; padding: 0 12px; border-radius: var(--r-pill); background: var(--accent); color: var(--accent-ink); font: 700 12px/1 var(--font); display: inline-flex; align-items: center; gap: 5px; text-decoration: none; flex: none; }
+.mini .open svg { width: 11px; height: 11px; }
+.mini .line { position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px; background: rgb(255 255 255 / .12); }
+.mini .line i { display: block; height: 100%; width: 100%; background: var(--text); }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); padding-top: 4px; }
+.tabs button { display: grid; justify-items: center; gap: 4px; padding: 6px 0; color: var(--muted); font: 500 10.5px/1 var(--font); }
+.tabs svg { width: 24px; height: 24px; }
+.tabs button[aria-current="page"] { color: var(--text); }
+
+/* 모바일 라디오 */
+.m-radio { padding: 0 0 170px; gap: 0; }
+.m-hero { padding: 8px 16px 18px; display: grid; gap: 14px; justify-items: center; background: linear-gradient(180deg, hsl(28 34% 30%), var(--ink)); }
+.m-hero .art { width: 230px; height: 230px; max-width: 100%; border-radius: var(--r-sm); box-shadow: 0 16px 40px rgb(0 0 0 / .5); }
+.m-hero .meta { justify-self: stretch; display: grid; gap: 6px; }
+.m-hero h3 { font: 800 26px/1.15 var(--font); letter-spacing: -.02em; }
+.m-hero .by { font-size: 13px; color: var(--muted); }
+.m-actions { display: flex; align-items: center; gap: 4px; padding: 0 12px 10px; }
+.m-actions .icon-btn { width: 40px; height: 40px; }
+.m-actions .icon-btn svg { width: 22px; height: 22px; }
+.m-actions .status { margin-left: auto; padding-right: 4px; }
+.m-note { margin: 0 16px 10px; font-size: 13px; color: var(--muted); line-height: 1.6; }
+.m-note b { color: var(--accent); font-weight: 600; }
+.mix-ctl { margin: 0 16px 8px; display: grid; gap: 6px; }
+.mix-ctl .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.mix-ctl .lbl output { color: var(--text); font-weight: 600; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 20px; background: transparent; margin: 0; }
+input[type=range]::-webkit-slider-runnable-track { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--text) var(--fill, 70%), var(--hover) var(--fill, 70%)); }
+input[type=range]::-moz-range-track { height: 4px; border-radius: 4px; background: var(--hover); }
+input[type=range]::-moz-range-progress { height: 4px; border-radius: 4px; background: var(--text); }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--text); margin-top: -5px; }
+input[type=range]::-moz-range-thumb { width: 14px; height: 14px; border: 0; border-radius: 50%; background: var(--text); }
+.m-row { display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 7px 8px 7px 16px; }
+.m-row .art { width: 48px; height: 48px; }
+.m-row .meta { min-width: 0; display: grid; gap: 2px; }
+.m-row .meta b { font: 500 15px/1.25 var(--font); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-row .meta small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.m-row .meta small .new { color: var(--accent); font-weight: 600; }
+.m-row .acts { display: flex; }
+.m-sync { position: absolute; left: 0; right: 0; bottom: 0; padding: 28px 12px 14px; background: linear-gradient(180deg, transparent, var(--ink) 30%); display: grid; gap: 8px; }
+.m-sync .btn { width: 100%; height: 50px; font-size: 15px; }
+.m-sync .info { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 11.5px; color: var(--faint); padding: 0 4px; }
+
+/* 모바일 보관함 */
+.lib-top { display: flex; align-items: center; gap: 12px; }
+.lib-top h3 { font: 800 24px/1 var(--font); letter-spacing: -.01em; flex: 1; }
+.lib-top .icon-btn svg { width: 22px; height: 22px; }
+.sort { display: flex; justify-content: space-between; align-items: center; font: 600 13px/1 var(--font); }
+.sort span { display: flex; align-items: center; gap: 6px; }
+.sort svg { width: 14px; height: 14px; }
+.m-lib { display: grid; gap: 4px; margin-top: -10px; }
+.m-lib .lib-item { grid-template-columns: 64px minmax(0, 1fr); padding: 6px 0; }
+.m-lib .lib-item .art { width: 64px; height: 64px; }
+.m-lib .lib-item:hover { background: none; }
+
+/* ---------- 토큰 & 규칙 ---------- */
+.spec { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+.spec-card { background: var(--ink); border-radius: var(--r-lg); padding: 20px; display: grid; gap: 14px; align-content: start; }
+.spec-card h3 { font: 700 16px/1.3 var(--font); }
+.sw-row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; gap: 12px; align-items: center; }
+.sw-row i { width: 36px; height: 36px; border-radius: var(--r-sm); border: 1px solid var(--line); display: block; }
+.sw-row b { font: 600 14px/1.2 var(--font); }
+.sw-row small { display: block; font-size: 12px; color: var(--muted); }
+.sw-row code { font: 500 12px/1 var(--font); color: var(--faint); }
+.ts-row { display: grid; grid-template-columns: 90px minmax(0, 1fr); gap: 12px; align-items: baseline; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.ts-row:last-child { border-bottom: 0; padding-bottom: 0; }
+.ts-row code { font: 500 12px/1.4 var(--font); color: var(--faint); }
+.bp { display: grid; gap: 10px; }
+.bp div { display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 12px; font-size: 14px; }
+.bp code { font: 600 13px/1.5 var(--font); color: var(--accent); }
+.bp span { color: var(--muted); }
+
+.compare { overflow-x: auto; }
+.compare table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 14px; }
+.compare th, .compare td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.compare th { font: 600 12.5px/1 var(--font); color: var(--muted); }
+.compare td:first-child { font-weight: 600; white-space: nowrap; }
+.compare td { color: var(--muted); }
+.compare td.ours { color: var(--text); }
+
+footer { font-size: 12.5px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 20px; line-height: 1.6; }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; animation: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="mast">
+    <p class="eyebrow">DADA Music · Design System v0.2</p>
+    <h1>Noir Atelier<span>.</span></h1>
+    <p class="lede">v0.1 검토 결과를 반영했습니다. 장식 서체를 걷어내고 읽기 쉬운 고딕으로 바꿨고, 화면 구성은 Spotify처럼 익숙한 음악 앱 레이아웃을 따릅니다. 포인트 색은 샴페인입니다.</p>
+    <div class="decided"><span>포인트 색 · 샴페인</span><span>글꼴 · 현대 고딕</span><span>레이아웃 · Spotify형, PC와 모바일</span></div>
+  </header>
+
+  <!-- ===================== PC ===================== -->
+  <section>
+    <div class="sec-head"><h2>PC · 1280px 이상</h2><p>왼쪽 보관함, 가운데 메인, 오른쪽 동기화 패널, 아래 동기화 바. 왼쪽 목록의 <b>Late Autumn</b>이나 빠른 접근 타일을 누르면 AI 라디오 화면으로, <b>홈</b>을 누르면 돌아갑니다. 하단 바의 버튼으로 동기화 흐름을 체험할 수 있습니다.</p></div>
+    <div class="desk-scroll">
+      <div class="browser">
+        <div class="browser-bar"><i></i><i></i><i></i><span>dada-music.web.app</span><span class="demo-flag">DEMO DATA</span></div>
+        <div class="desk">
+          <div class="d-side">
+            <nav class="panel d-nav" aria-label="주 메뉴 (시안)">
+              <div class="logo"><i>D</i>DADA Music</div>
+              <button class="nav-item" data-go="home" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4z" stroke-linejoin="round"/></svg>홈</button>
+              <button class="nav-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/></svg>탐색</button>
+            </nav>
+            <div class="panel d-lib">
+              <div class="d-lib-h"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 4v16M10 4v16M15 4.5l4 15" stroke-linecap="round"/></svg>내 보관함</b><button class="icon-btn" aria-label="새로 만들기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button></div>
+              <div class="chips"><button class="chip">플레이리스트</button><button class="chip">AI 라디오</button><button class="chip">아티스트</button><button class="chip">공유</button></div>
+              <div class="lib-list" id="d-lib"></div>
+            </div>
+          </div>
+
+          <main class="panel d-main">
+            <div class="d-top">
+              <span class="circle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m10 3-5 5 5 5"/></svg></span>
+              <span class="circle"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m6 3 5 5-5 5"/></svg></span>
+              <label class="d-search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/></svg>곡, 아티스트, 시대, 분위기 검색</label>
+              <span class="me">A</span>
+            </div>
+
+            <div class="d-view d-home" id="view-home">
+              <div class="chips"><button class="chip" aria-pressed="true">전체</button><button class="chip">AI 라디오</button><button class="chip">플레이리스트</button><button class="chip">차트</button></div>
+              <div class="quick" id="d-quick"></div>
+              <div class="shelf"><div class="shelf-h"><h4>오늘의 AI 라디오</h4><a href="#">모두 표시</a></div><div class="cards" id="d-radios"></div></div>
+              <div class="shelf"><div class="shelf-h"><h4>지금 한국에서</h4><a href="#">모두 표시</a></div><div class="cards" id="d-chart"></div><p class="src">출처: YouTube 인기 뮤직비디오 · KR · 2026-11-09 기준. 공식 음원 차트가 아닙니다.</p></div>
+              <div class="shelf"><div class="shelf-h"><h4>시대로 떠나기</h4><a href="#">모두 표시</a></div><div class="cards" id="d-eras"></div><p class="src">시대별 목록은 AI 큐레이션입니다. 당시 공식 차트 순위가 아닙니다.</p></div>
+            </div>
+
+            <div class="d-view d-radio" id="view-radio" hidden>
+              <div class="pl-head">
+                <div class="art" style="--h1:38;--h2:12"></div>
+                <div class="meta">
+                  <span class="kind">AI 라디오</span>
+                  <h3>Late Autumn</h3>
+                  <span class="facts"><b>A</b> · 2026-11-09 생성 · 30곡, 1시간 52분 · 익숙함 70 / 새로움 30</span>
+                </div>
+              </div>
+              <div class="pl-actions">
+                <a class="btn btn-primary" href="https://music.youtube.com/" target="_blank" rel="noopener"><svg viewBox="0 0 16 16"><path d="M5 3.5v9l7-4.5-7-4.5Z" fill="currentColor"/></svg>YouTube Music에서 듣기</a>
+                <button class="icon-btn heart" aria-label="라디오 저장" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></button>
+                <button class="icon-btn" aria-label="다시 추천"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 12a7 7 0 1 1-2.1-5" stroke-linecap="round"/><path d="M17 3v4h-4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                <button class="icon-btn" aria-label="더 보기"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+                <span class="status ok"><i></i>YouTube Music과 동기화됨 · 순서 확인</span>
+              </div>
+              <div class="pl-note"><b>추천 이유</b><p>IU의 맑은 음색에서 출발해 Coldplay의 현악 편곡으로 넘어갑니다. 후반부 아홉 곡은 아직 들어보지 않았을 곡입니다. YouTube Music에서 좋아요한 곡 2개가 반영됐습니다.</p></div>
+              <div class="tbl" id="d-table"></div>
+            </div>
+          </main>
+
+          <aside class="panel d-right">
+            <div class="head"><b>지금 보낼 목록</b><span class="demo-flag">DEMO</span></div>
+            <div class="art" style="--h1:38;--h2:12"></div>
+            <h4>Late Autumn</h4>
+            <p class="sub">AI 라디오 · 30곡</p>
+            <div class="box">
+              <b>YouTube Music 재생 순서</b>
+              <div class="queue" id="d-queue"></div>
+            </div>
+            <div class="box">
+              <b>재생은 YouTube Music에서</b>
+              <p>DADA는 목록을 만들고 보냅니다. 재생, 다음 곡, 화면 꺼짐 재생은 YouTube Music 앱이 담당합니다.</p>
+            </div>
+          </aside>
+
+          <footer class="panel d-bar" style="background:none">
+            <div class="now"><div class="art" style="--h1:38;--h2:12"></div><div><b>Late Autumn</b><small>AI 라디오 · 30곡</small></div></div>
+            <div class="center">
+              <div class="row">
+                <span class="status ok" id="d-st"><i></i>동기화됨 · 3분 전</span>
+                <button class="btn btn-primary" id="d-sync">다시 보내기</button>
+                <a class="btn btn-ghost" href="https://music.youtube.com/" target="_blank" rel="noopener" style="height:36px;font-size:13px;padding:0 16px">YouTube Music 열기</a>
+              </div>
+              <div class="prog num"><span id="d-n">30/30</span><div class="bar" id="d-bar"><i></i></div><span>순서 확인됨</span></div>
+            </div>
+            <div class="right"><div class="quota"><span class="num">오늘 사용량 2,012 / 10,000</span><div class="bar"><i style="width:20%"></i></div></div></div>
+          </footer>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 모바일 ===================== -->
+  <section>
+    <div class="sec-head"><h2>모바일 · 767px 이하</h2><p>엄지로 닿는 하단 탭 4개와 그 위의 미니 바. 미니 바는 재생 컨트롤 대신 동기화 상태와 “열기”를 보여줍니다. AI 라디오 화면의 버튼을 누르면 동기화 흐름이 재생됩니다.</p></div>
+    <div class="phones">
+
+      <figure class="device">
+        <div class="phone">
+          <div class="sbar"><span>9:41</span><span class="demo-flag">DEMO</span></div>
+          <div class="m-scroll">
+            <div class="m-top"><span class="me">A</span><div class="chips"><button class="chip" aria-pressed="true">전체</button><button class="chip">AI 라디오</button><button class="chip">플레이리스트</button></div></div>
+            <div class="quick" id="m-quick"></div>
+            <div class="shelf"><div class="shelf-h"><h4>오늘의 AI 라디오</h4></div><div class="cards" id="m-radios"></div></div>
+            <div class="shelf"><div class="shelf-h"><h4>지금 한국에서</h4></div><div class="cards" id="m-chart"></div><p class="src">YouTube 인기 뮤직비디오 · KR · 11/9 기준</p></div>
+          </div>
+          <div class="m-dock">
+            <div class="mini"><div class="art" style="--h1:38;--h2:12"></div><div class="meta"><b>Late Autumn · 30곡</b><span class="status ok"><i></i>동기화됨 · 3분 전</span></div><a class="open" href="https://music.youtube.com/" target="_blank" rel="noopener">열기<svg viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 3 9" stroke="currentColor" stroke-width="1.5"/></svg></a><div class="line"><i></i></div></div>
+            <nav class="tabs" data-tabs="home"></nav>
+          </div>
+        </div>
+        <figcaption>홈</figcaption>
+      </figure>
+
+      <figure class="device">
+        <div class="phone">
+          <div class="sbar"><span>9:41</span><span class="demo-flag">DEMO</span></div>
+          <div class="m-scroll m-radio">
+            <div class="m-hero">
+              <div class="art" style="--h1:38;--h2:12"></div>
+              <div class="meta"><h3>Late Autumn</h3><span class="by">AI 라디오 · 30곡 · 1시간 52분</span></div>
+            </div>
+            <div class="m-actions">
+              <button class="icon-btn heart" aria-label="라디오 저장" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg></button>
+              <button class="icon-btn" aria-label="다시 추천"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M19 12a7 7 0 1 1-2.1-5" stroke-linecap="round"/><path d="M17 3v4h-4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button class="icon-btn" aria-label="더 보기"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg></button>
+              <span class="status none" id="m-st"><i></i>아직 보내지 않음</span>
+            </div>
+            <p class="m-note"><b>추천 이유</b> · IU의 맑은 음색에서 Coldplay의 현악 편곡으로. 후반 9곡은 처음 듣는 곡입니다.</p>
+            <div class="mix-ctl"><div class="lbl"><span>익숙한 곡</span><output id="mix-out">70 / 30</output><span>새로운 발견</span></div><input type="range" id="mix" min="0" max="100" value="70" aria-label="익숙함과 새로움 비율"></div>
+            <div id="m-tracks"></div>
+          </div>
+          <div class="m-sync">
+            <div class="bar" id="m-bar" style="height:3px"><i style="width:0"></i></div>
+            <button class="btn btn-primary" id="m-sync"><svg viewBox="0 0 16 16"><path d="M5 3.5v9l7-4.5-7-4.5Z" fill="currentColor"/></svg><span>YouTube Music에서 듣기</span></button>
+            <a class="btn btn-primary" id="m-open" href="https://music.youtube.com/" target="_blank" rel="noopener" hidden>YouTube Music 열기</a>
+            <div class="info"><span id="m-note">새 목록 생성 · 약 1,600 units</span><span>순서 자동 확인</span></div>
+          </div>
+        </div>
+        <figcaption>AI 라디오 · 검토하고 보내기</figcaption>
+      </figure>
+
+      <figure class="device">
+        <div class="phone">
+          <div class="sbar"><span>9:41</span><span class="demo-flag">DEMO</span></div>
+          <div class="m-scroll">
+            <div class="lib-top"><span class="me" style="width:32px;height:32px;border-radius:50%;background:#3a3129;display:grid;place-items:center;font:700 13px/1 var(--font)">A</span><h3>내 보관함</h3><button class="icon-btn" aria-label="검색"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/></svg></button><button class="icon-btn" aria-label="새로 만들기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14" stroke-linecap="round"/></svg></button></div>
+            <div class="chips"><button class="chip">플레이리스트</button><button class="chip">AI 라디오</button><button class="chip">아티스트</button><button class="chip">공유</button></div>
+            <div class="sort"><span><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 3v10M2 11l2 2 2-2M10 4h4M10 8h3M10 12h2"/></svg>최근 순</span><span style="color:var(--muted);font-weight:500">동기화 상태 표시</span></div>
+            <div class="m-lib" id="m-lib"></div>
+          </div>
+          <div class="m-dock">
+            <div class="mini"><div class="art" style="--h1:38;--h2:12"></div><div class="meta"><b>Late Autumn · 30곡</b><span class="status ok"><i></i>동기화됨 · 3분 전</span></div><a class="open" href="https://music.youtube.com/" target="_blank" rel="noopener">열기<svg viewBox="0 0 12 12" fill="none"><path d="M4 2h6v6M10 2 3 9" stroke="currentColor" stroke-width="1.5"/></svg></a><div class="line"><i></i></div></div>
+            <nav class="tabs" data-tabs="lib"></nav>
+          </div>
+        </div>
+        <figcaption>보관함 · 목록마다 동기화 상태</figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ===================== 토큰 ===================== -->
+  <section>
+    <div class="sec-head"><h2>토큰과 규칙</h2><p>개발에 그대로 옮길 값입니다. 앱에서는 한글 가독성이 가장 좋은 Pretendard를 쓰고, 이 시안 페이지는 웹폰트 제약으로 비슷한 Figtree와 Noto Sans KR로 보여줍니다.</p></div>
+    <div class="spec">
+      <div class="spec-card">
+        <h3>컬러</h3>
+        <div class="sw-row"><i style="background:var(--void)"></i><div><b>Void</b><small>패널 사이 바닥</small></div><code>#070606</code></div>
+        <div class="sw-row"><i style="background:var(--ink)"></i><div><b>Ink</b><small>패널, 앱 배경</small></div><code>#121110</code></div>
+        <div class="sw-row"><i style="background:var(--surface)"></i><div><b>Surface</b><small>카드, hover</small></div><code>#1A1816</code></div>
+        <div class="sw-row"><i style="background:var(--raised)"></i><div><b>Raised</b><small>칩, 입력창</small></div><code>#24211E</code></div>
+        <div class="sw-row"><i style="background:var(--text)"></i><div><b>Text</b><small>본문, 제목</small></div><code>#F2EDE4</code></div>
+        <div class="sw-row"><i style="background:var(--muted)"></i><div><b>Muted</b><small>보조 정보</small></div><code>#A39A8F</code></div>
+        <div class="sw-row"><i style="background:var(--accent)"></i><div><b>Champagne</b><small>주 행동, 현재 항목</small></div><code>#C8A97E</code></div>
+        <div class="sw-row"><i style="background:linear-gradient(90deg,var(--ok) 0 33%,var(--warn) 33% 66%,var(--err) 66%)"></i><div><b>Status</b><small>동기화됨 · 진행 중 · 실패</small></div><code>3색</code></div>
+      </div>
+      <div class="spec-card">
+        <h3>글자 크기</h3>
+        <div class="ts-row"><code>Hero 76/800</code><span style="font:800 40px/1 var(--font);letter-spacing:-.03em">Late Autumn</span></div>
+        <div class="ts-row"><code>Title 24/800</code><span style="font:800 24px/1.2 var(--font)">오늘의 AI 라디오</span></div>
+        <div class="ts-row"><code>Shelf 22/700</code><span style="font:700 20px/1.2 var(--font)">지금 한국에서</span></div>
+        <div class="ts-row"><code>Body 15/500</code><span style="font:500 15px/1.4 var(--font)">Blueming · IU</span></div>
+        <div class="ts-row"><code>Meta 13/400</code><span style="font-size:13px;color:var(--muted)">AI 라디오 · 30곡 · 1시간 52분</span></div>
+        <div class="ts-row"><code>Small 11.5</code><span style="font-size:11.5px;color:var(--faint)">출처: YouTube 인기 뮤직비디오 · KR</span></div>
+      </div>
+      <div class="spec-card">
+        <h3>화면 크기별 구성</h3>
+        <div class="bp">
+          <div><code>~767px</code><span>하단 탭 4개, 미니 바, 선반은 가로 스크롤</span></div>
+          <div><code>768–1279px</code><span>왼쪽 사이드바를 아이콘만 남긴 72px로 접음, 우측 패널 숨김</span></div>
+          <div><code>1280px~</code><span>사이드바 290px + 메인 + 우측 패널 300px + 하단 바</span></div>
+          <div><code>모서리</code><span>앨범아트 4–6px, 카드 8px, 버튼과 칩은 완전 둥글게</span></div>
+          <div><code>터치 영역</code><span>모바일 최소 44px. 행 높이 56–62px</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== Spotify 비교 ===================== -->
+  <section>
+    <div class="sec-head"><h2>Spotify에서 가져온 것과 다르게 한 것</h2><p>익숙한 사용법은 그대로 쓰고, 브랜드 요소와 실제로 하지 않는 기능은 가져오지 않습니다.</p></div>
+    <div class="compare">
+      <table>
+        <thead><tr><th>영역</th><th>Spotify 패턴</th><th>DADA Music</th></tr></thead>
+        <tbody>
+          <tr><td>레이아웃</td><td>보관함 사이드바, 메인, 우측 패널, 하단 바</td><td class="ours">같은 구조. 우측 패널은 “지금 보낼 목록”과 YouTube Music 재생 순서</td></tr>
+          <tr><td>하단 바</td><td>재생, 일시정지, 탐색 바, 볼륨</td><td class="ours">동기화 상태, 다시 보내기, YouTube Music 열기, 오늘 사용량. 재생 컨트롤은 두지 않음</td></tr>
+          <tr><td>목록 화면</td><td>앨범 색 그라데이션 헤더, 큰 제목, 곡 표</td><td class="ours">같은 구조. 앨범 열 대신 “추천 이유” 열, 하트 옆에 관심 없음</td></tr>
+          <tr><td>홈</td><td>빠른 접근 타일, 가로 선반</td><td class="ours">같은 구조. 차트와 시대 선반에는 출처와 기준일을 항상 표시</td></tr>
+          <tr><td>색과 로고</td><td>초록색 포인트, 고유 로고</td><td class="ours">샴페인 포인트와 따뜻한 검정, DADA 자체 로고. Spotify 브랜드 요소는 쓰지 않음</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>DADA Music · Noir Atelier v0.2 · 2026-11-09 · 곡, 수치, 앨범아트는 시안용 데모입니다. 앨범아트는 생성한 그래픽이며 실제 앱은 YouTube 썸네일을 씁니다.</footer>
+</div>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const heart = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10Z"/></svg>';
+  const nope = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8"/><path d="M8.5 12h7" stroke-linecap="round"/></svg>';
+  const art = (h, cls = '', inner = '') => h === 'liked'
+    ? `<div class="art liked ${cls}">${heart}</div>`
+    : `<div class="art ${cls}" style="--h1:${h[0]};--h2:${h[1]}">${inner}</div>`;
+  const st = (s) => ({ ok: '<span class="status ok"><i></i>동기화됨</span>', run: '<span class="status run"><i></i>동기화 중</span>', err: '<span class="status err"><i></i>실패 · 기존 목록 유지</span>', none: '' })[s];
+
+  const LIB = [
+    { t: '좋아요한 곡', s: '플레이리스트 · 128곡', h: 'liked', st: 'ok' },
+    { t: 'Late Autumn', s: 'AI 라디오 · 30곡', h: [38, 12], st: 'ok', go: 'radio', cur: true },
+    { t: '둘의 믹스', s: '공유 · A, B', h: [340, 280], st: 'run' },
+    { t: '새벽 드라이브', s: '플레이리스트 · 24곡', h: [200, 230], st: 'none' },
+    { t: '2000s 록 발라드', s: 'AI 라디오 · 30곡', h: [10, 200], st: 'ok' },
+    { t: '운동할 때', s: '플레이리스트 · 42곡', h: [100, 20], st: 'err' },
+    { t: 'IU', s: '아티스트', h: [170, 210], round: true, st: 'none' },
+    { t: 'Coldplay', s: '아티스트', h: [210, 40], round: true, st: 'none' },
+  ];
+  const QUICK = [
+    ['좋아요한 곡', 'liked'], ['Late Autumn', [38, 12], 'radio'], ['둘의 믹스', [340, 280]], ['새벽 드라이브', [200, 230]],
+    ['2000s 록 발라드', [10, 200]], ['운동할 때', [100, 20]], ['Coldplay 믹스', [210, 40]], ['비 오는 서울', [220, 260]],
+  ];
+  const RADIOS = [
+    ['Late Autumn', 'IU, Coldplay에서 출발하는 늦가을 서른 곡', [38, 12], 'radio'],
+    ['Rainy Seoul', '태연, 10CM와 비 오는 오후', [220, 260]],
+    ['Neon ’80s', '신스팝 시대로 떠나는 라디오', [320, 260]],
+    ['Quiet Hours', '새로운 발견 60%, 조용한 밤', [180, 240]],
+    ['A × B', '둘의 취향이 겹치는 곡', [340, 280]],
+    ['Morning Run', '빠른 템포, 익숙한 곡 위주', [100, 20]],
+  ];
+  const CHART = [['Hype Boy', 'NewJeans', [300, 250]], ['Dynamite', 'BTS', [30, 350]], ['Blueming', 'IU', [170, 210]], ['Supernova', 'aespa', [260, 200]], ['Ditto', 'NewJeans', [200, 330]], ['Love wins all', 'IU', [10, 40]]];
+  const ERAS = [['’80s', '신스팝과 발라드의 시작', [320, 260]], ['’90s', '1세대 아이돌과 R&B', [40, 300]], ['’00s', '록 발라드, 힙합의 확장', [10, 200]], ['’10s', 'K-POP의 세계화', [280, 180]], ['’20s', '지금의 소리', [150, 60]]];
+  const TRACKS = [
+    { t: 'Blueming', a: 'IU', w: '직접 등록한 곡', d: '3:37', h: [170, 210], liked: true },
+    { t: 'Viva La Vida', a: 'Coldplay', w: 'YouTube Music에서 좋아요', d: '4:02', h: [38, 12], liked: true },
+    { t: 'Through the Night', a: 'IU', w: 'Blueming과 같은 어쿠스틱 결', d: '4:14', h: [24, 300] },
+    { t: 'Fix You', a: 'Coldplay', w: '같은 시기 현악 편곡', d: '4:55', h: [210, 40] },
+    { t: 'Rain', a: '태연', w: '비슷한 음색 · 2010s 발라드', d: '3:58', h: [220, 260] },
+    { t: 'Lost Stars', a: 'Adam Levine', w: '현악 편곡 · 처음 듣는 곡', d: '4:27', h: [10, 330], fresh: true },
+    { t: '봄날', a: 'BTS', w: '좋아요한 BTS의 발라드', d: '4:34', h: [190, 160] },
+    { t: 'Yellow', a: 'Coldplay', w: 'Coldplay 초기작', d: '4:29', h: [50, 30] },
+    { t: '밤편지', a: 'IU', w: 'IU · 2010s 후반', d: '4:13', h: [230, 30] },
+    { t: 'The Night We Met', a: 'Lord Huron', w: '조용한 밤 · 처음 듣는 곡', d: '3:28', h: [200, 300], fresh: true },
+  ];
+
+  // PC 보관함
+  $('#d-lib').innerHTML = LIB.map((x) => `<button class="lib-item" ${x.go ? `data-go="${x.go}"` : ''} ${x.cur ? 'aria-current="false" data-cur' : ''}>${art(x.h, x.round ? 'round' : '')}<span class="meta"><b>${x.t}</b><small>${x.s}${x.st !== 'none' ? ' · ' + st(x.st) : ''}</small></span></button>`).join('');
+  $('#m-lib').innerHTML = LIB.map((x) => `<div class="lib-item">${art(x.h, x.round ? 'round' : '')}<span class="meta"><b>${x.t}</b><small>${x.s}${x.st !== 'none' ? ' · ' + st(x.st) : ''}</small></span></div>`).join('');
+
+  const tile = ([t, h, go]) => `<button class="tile" ${go ? `data-go="${go}"` : ''}>${art(h)}<b>${t}</b></button>`;
+  $('#d-quick').innerHTML = QUICK.map(tile).join('');
+  $('#m-quick').innerHTML = QUICK.slice(0, 6).map(tile).join('');
+
+  const card = ([t, s, h, go]) => `<button class="card" ${go ? `data-go="${go}"` : ''}>${art(h)}<b>${t}</b><small>${s}</small></button>`;
+  $('#d-radios').innerHTML = RADIOS.map(card).join('');
+  $('#m-radios').innerHTML = RADIOS.map(card).join('');
+  const chartCard = ([t, a, h], i) => `<button class="card">${art(h, '', `<span class="rank num">${i + 1}</span>`)}<b>${t}</b><small>${a}</small></button>`;
+  $('#d-chart').innerHTML = CHART.map(chartCard).join('');
+  $('#m-chart').innerHTML = CHART.map(chartCard).join('');
+  $('#d-eras').innerHTML = ERAS.map(card).join('');
+
+  // PC 곡 표
+  $('#d-table').innerHTML = `<div class="tbl-row tbl-h"><span class="n">#</span><span>제목</span><span>추천 이유</span><span>반응</span><span class="d">시간</span></div>` +
+    TRACKS.map((x, i) => `<div class="tbl-row track"><span class="n num">${i + 1}</span><span class="ti">${art(x.h)}<div><b>${x.t}</b><small>${x.a}</small></div></span><span class="why">${x.fresh ? '<span class="new">NEW</span>' : ''}${x.w}</span><span class="acts"><button class="icon-btn heart" aria-label="좋아요" aria-pressed="${!!x.liked}">${heart}</button><button class="icon-btn nope" aria-label="관심 없음" aria-pressed="false">${nope}</button></span><span class="d num">${x.d}</span></div>`).join('') +
+    `<p class="src" style="padding:16px">외 20곡</p>`;
+  $('#d-queue').innerHTML = TRACKS.slice(0, 5).map((x) => `<div>${art(x.h)}<span><b>${x.t}</b><small>${x.a}</small></span></div>`).join('');
+
+  // 모바일 곡 목록
+  $('#m-tracks').innerHTML = TRACKS.map((x) => `<div class="m-row track">${art(x.h)}<div class="meta"><b>${x.t}</b><small>${x.fresh ? '<span class="new">NEW</span> · ' : ''}${x.a} · ${x.w}</small></div><div class="acts"><button class="icon-btn heart" aria-label="좋아요" aria-pressed="${!!x.liked}">${heart}</button><button class="icon-btn nope" aria-label="관심 없음" aria-pressed="false">${nope}</button></div></div>`).join('');
+
+  // 모바일 탭
+  const TABS = [
+    ['home', '홈', '<path d="M4 10.5 12 4l8 6.5V20h-5.5v-5.5h-5V20H4z" stroke-linejoin="round"/>'],
+    ['search', '탐색', '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/>'],
+    ['radio', 'AI 라디오', '<circle cx="12" cy="12" r="2"/><path d="M8 8a5.6 5.6 0 0 0 0 8M16 8a5.6 5.6 0 0 1 0 8M5 5a10 10 0 0 0 0 14M19 5a10 10 0 0 1 0 14" stroke-linecap="round"/>'],
+    ['lib', '보관함', '<path d="M5 4v16M10 4v16M15 4.5l4 15" stroke-linecap="round"/>'],
+  ];
+  document.querySelectorAll('[data-tabs]').forEach((nav) => {
+    nav.innerHTML = TABS.map(([k, l, p]) => `<button ${nav.dataset.tabs === k ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">${p}</svg>${l}</button>`).join('');
+  });
+
+  // PC 화면 전환
+  const showView = (v) => {
+    $('#view-home').hidden = v !== 'home';
+    $('#view-radio').hidden = v !== 'radio';
+    document.querySelector('.nav-item[data-go="home"]').setAttribute('aria-current', v === 'home' ? 'page' : 'false');
+    document.querySelectorAll('#d-lib [data-cur]').forEach((el) => el.setAttribute('aria-current', v === 'radio'));
+  };
+
+  document.addEventListener('click', (e) => {
+    const go = e.target.closest('.desk [data-go]');
+    if (go) { showView(go.dataset.go); return; }
+    const b = e.target.closest('.icon-btn.heart, .icon-btn.nope');
+    if (b && b.closest('.track')) {
+      const on = b.getAttribute('aria-pressed') !== 'true';
+      b.setAttribute('aria-pressed', on);
+      const tr = b.closest('.track');
+      const isNope = b.classList.contains('nope');
+      if (on) tr.querySelector(isNope ? '.heart' : '.nope').setAttribute('aria-pressed', 'false');
+      tr.classList.toggle('dimmed', isNope ? on : false);
+      return;
+    }
+    if (b) b.setAttribute('aria-pressed', b.getAttribute('aria-pressed') !== 'true');
+  });
+
+  // 슬라이더
+  const mix = $('#mix');
+  const paint = () => { $('#mix-out').textContent = `${mix.value} / ${100 - mix.value}`; mix.style.setProperty('--fill', mix.value + '%'); };
+  mix.addEventListener('input', paint); paint();
+
+  // 동기화 흐름 (데모 시뮬레이션)
+  function runSync({ onTick, onVerify, onDone }) {
+    let n = 0;
+    const timer = setInterval(() => {
+      n++; onTick(n);
+      if (n === 30) { clearInterval(timer); onVerify(); setTimeout(onDone, 1100); }
+    }, 60);
+  }
+  const setSt = (el, cls, txt) => { el.className = 'status ' + cls; el.innerHTML = '<i></i>' + txt; };
+
+  // 모바일
+  const mBtn = $('#m-sync'), mOpen = $('#m-open'), mSt = $('#m-st'), mBar = $('#m-bar i'), mNote = $('#m-note');
+  mBtn.addEventListener('click', () => {
+    if (mBtn.disabled) return;
+    mBtn.disabled = true; mBtn.querySelector('span').textContent = '보내는 중';
+    runSync({
+      onTick: (n) => { mBar.style.width = n / 30 * 100 + '%'; setSt(mSt, 'run', `동기화 중 ${n}/30`); mNote.textContent = '새 목록 생성 → 순서대로 추가'; },
+      onVerify: () => { setSt(mSt, 'run', '순서 확인 중'); mNote.textContent = 'YouTube에서 다시 조회'; },
+      onDone: () => { setSt(mSt, 'ok', '동기화됨 · 순서 확인'); mNote.textContent = '이전 목록은 정리됨'; mBtn.hidden = true; mOpen.hidden = false; },
+    });
+  });
+
+  // PC 하단 바
+  const dBtn = $('#d-sync'), dSt = $('#d-st'), dBar = $('#d-bar'), dN = $('#d-n');
+  dBtn.addEventListener('click', () => {
+    if (dBtn.disabled) return;
+    dBtn.disabled = true; dBar.classList.add('syncing'); dBtn.textContent = '보내는 중';
+    runSync({
+      onTick: (n) => { dBar.firstElementChild.style.width = n / 30 * 100 + '%'; dN.textContent = `${n}/30`; setSt(dSt, 'run', '동기화 중'); },
+      onVerify: () => setSt(dSt, 'run', '순서 확인 중'),
+      onDone: () => { setSt(dSt, 'ok', '동기화됨 · 방금'); dBar.classList.remove('syncing'); dBtn.disabled = false; dBtn.textContent = '다시 보내기'; },
+    });
+  });
+})();
+</script>

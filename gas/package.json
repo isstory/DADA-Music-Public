@@ -1,0 +1,17 @@
+{
+  "name": "dada-music-gas",
+  "private": true,
+  "description": "DADA Music 백엔드 (Google Apps Script). clasp로 배포",
+  "scripts": {
+    "login": "clasp -u dada login",
+    "create": "node create.mjs",
+    "push": "clasp -u dada push --force",
+    "deploy": "node deploy.mjs",
+    "logs": "clasp -u dada logs",
+    "open": "clasp -u dada open-script",
+    "check": "node --check src/Code.js && node --check src/Config.js && node --check src/Auth.js && node --check src/Db.js && node --check src/Quota.js && node --check src/Youtube.js && node --check src/Api.js && node --check src/Setup.js && node --check src/Selftest.js && node --check src/Sync.js && node --check src/Ai.js && node --check src/Radio.js"
+  },
+  "devDependencies": {
+    "@google/clasp": "^3.4.1"
+  }
+}

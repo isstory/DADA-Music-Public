@@ -1,0 +1,24 @@
+{
+  "name": "dada-music-gate0-poc",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Gate 0 기술 PoC — YouTube Data API 플레이리스트 생성/동기화 검증",
+  "scripts": {
+    "auth": "node gate0.mjs auth",
+    "resolve": "node gate0.mjs resolve",
+    "create": "node gate0.mjs create",
+    "verify": "node gate0.mjs verify",
+    "reorder": "node gate0.mjs reorder",
+    "swap": "node gate0.mjs swap",
+    "rating": "node gate0.mjs rating",
+    "cleanup": "node gate0.mjs cleanup",
+    "quota": "node gate0.mjs quota"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "googleapis": "^189.0.0"
+  }
+}

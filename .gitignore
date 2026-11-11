@@ -1,0 +1,30 @@
+node_modules/
+.env
+.env.*
+!.env.example
+
+# OAuth 비밀값·토큰 — 절대 커밋 금지
+**/.secrets/
+
+# clasp 인증(.clasprc.json)·프로젝트/배포 ID — 계정별 값, 커밋하지 않음
+.clasprc.json
+gas/.clasp.json
+gas/.deployment.json
+
+# 빌드 산출물
+web/dist/
+web/dev-dist/
+*.tsbuildinfo
+
+# PoC 실행 산출물 (계정별 playlistId 등)
+poc/data/
+
+# 증거 스크린샷은 커밋해도 됨 (docs/gate0/evidence/)
+
+# GAS 로컬 설정(허용 이메일·클라이언트 ID) — GAS에는 올리지만 깃에는 커밋하지 않음
+gas/src/Local.js
+
+# Firebase CLI 캐시·로그
+.firebase/
+firebase-debug.log
+*-debug.log
